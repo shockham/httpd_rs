@@ -1,5 +1,6 @@
 #![feature(convert)]
 #![feature(collections)]
+#![feature(buf_stream)]
 
 extern crate regex;
 
@@ -27,12 +28,12 @@ fn main() {
         Err(e) => panic!("{}", e),
     };
 
-    println!("httpd_rd 0.0.1\nhttp://{}", address);
-    
+    println!("httpd_rs 0.0.1\nhttp://{}", address);
+
     //vec of the incoming streams
     let streams:Vec<TcpStream> = Vec::new();
     let data = Arc::new(Mutex::new(streams));
-    
+
     //spawn some worker threads
     for _ in 0..worker_no {
         let data = data.clone();
@@ -56,7 +57,7 @@ fn main() {
             }
         });
     }
-    
+
     //loop for accepting requests
     for stream in listener.incoming() {
         match stream {
@@ -103,7 +104,7 @@ fn get_route(request:String) -> String {
             return "/".to_string();
         },
     };
-    
+
     let split_path: Vec<&str> = full_path.split('?').collect();
 
     split_path[0].to_string()
@@ -141,7 +142,7 @@ fn handle_client(stream: &mut BufStream<TcpStream>) {
             return;
         },
     };
-    
+
     let request:String = match  str::from_utf8(&byte_req){
         Ok(req) => req.to_string(),
         Err(e) => {
@@ -149,6 +150,7 @@ fn handle_client(stream: &mut BufStream<TcpStream>) {
             return;
         },
     };
+
     let mut route:String = get_route(request);
 
     if route == "/" {
@@ -160,28 +162,33 @@ fn handle_client(stream: &mut BufStream<TcpStream>) {
     //if the file is not found need to 404
     let path_str = format!("/httpd_rd_root{}",route);
     let path = Path::new(&path_str);
-    let mut file = match File::open(path) {
-        Ok(file) => file,
+    let response = match File::open(path) {
+        Ok(f) => {
+            let mut file = f;
+
+            let mut file_buf:Vec<u8> = Vec::new();
+            let _ = file.read_to_end(&mut file_buf);
+
+            let mimetype = get_mimetype(path.extension().unwrap().to_str().unwrap());
+
+            let headers = format!("HTTP/1.1 200 OK\r\nContent-Type: {}\r\ncontent-length: {}\r\n\r\n", mimetype, file_buf.len());
+
+            let mut res:Vec<u8> = headers.into_bytes();
+            res.append(&mut file_buf);
+            
+            res
+        },
         Err(e) => {
-            println!("error: {}", e);
-            return;
+            println!("file open error: {}", e);
+            let header = format!("HTTP/1.1 404 NOT FOUND\r\n\r\n");
+            header.into_bytes()
         },
     };
-
-    let mut file_buf:Vec<u8> = Vec::new();
-    let _ = file.read_to_end(&mut file_buf);
-    
-    let mimetype = get_mimetype(path.extension().unwrap().to_str().unwrap());
-
-    let headers = format!("HTTP/1.1 200 OK\r\nContent-Type: {}\r\ncontent-length: {}\r\n\r\n", mimetype, file_buf.len());
-
-    let mut response:Vec<u8> = headers.into_bytes();
-    response.append(&mut file_buf);
 
     match stream.write_all(response.as_slice()){
         Ok(_) => return,
         Err(e) => {
-            println!("error: {}", e);
+            println!("response write error: {}", e);
             return;
         },
     }       

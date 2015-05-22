@@ -1,12 +1,12 @@
 [root]
-name = "httpd_rd"
+name = "httpd_rs"
 version = "0.1.0"
 dependencies = [
- "regex 0.1.28 (registry+https://github.com/rust-lang/crates.io-index)",
+ "regex 0.1.30 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "regex"
-version = "0.1.28"
+version = "0.1.30"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
