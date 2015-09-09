@@ -1,12 +1,12 @@
+#![feature(append)]
 #![feature(convert)]
-#![feature(collections)]
-#![feature(buf_stream)]
 
 extern crate regex;
+extern crate bufstream;
 
 use self::regex::Regex;
 use std::net::{TcpListener, TcpStream};
-use std::io::BufStream;
+use bufstream::BufStream;
 use std::thread;
 use std::fs::File;
 use std::io::prelude::*;
