@@ -1,4 +1,3 @@
-#![feature(append)]
 #![feature(convert)]
 
 extern crate regex;
@@ -28,7 +27,7 @@ fn main() {
         Err(e) => panic!("{}", e),
     };
 
-    println!("httpd_rs 0.0.1\nhttp://{}", address);
+    println!("httpd_rs 0.1.0\nhttp://{}", address);
 
     //vec of the incoming streams
     let streams:Vec<TcpStream> = Vec::new();
