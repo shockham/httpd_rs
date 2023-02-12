@@ -1,5 +1,3 @@
-#![feature(convert)]
-
 extern crate regex;
 extern crate bufstream;
 
@@ -97,7 +95,7 @@ fn get_route(request:String) -> String {
     };
 
     let full_path: &str = match caps.name("route") {
-        Some(c) => c,
+        Some(c) => c.as_str(),
         None => {
             println!("error: no route capture");
             return "/".to_string();
